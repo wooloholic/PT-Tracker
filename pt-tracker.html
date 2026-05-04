@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PT Tracker</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f0;color:#1a1a1a;min-height:100vh;padding:1.5rem;}
+@media(prefers-color-scheme:dark){body{background:#1a1a1a;color:#f0ede8;}}
+
+.container{max-width:960px;margin:0 auto;}
+h1{font-size:18px;font-weight:500;margin-bottom:1.25rem;color:#1a1a1a;}
+@media(prefers-color-scheme:dark){h1{color:#f0ede8;}}
+
+.today-hero{background:#fff;border:1.5px solid #7F77DD;border-radius:12px;padding:14px 18px;margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+@media(prefers-color-scheme:dark){.today-hero{background:#2a2a2a;}}
+.hero-day{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.07em;color:#7F77DD;margin-bottom:2px;}
+.hero-title{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:2px;}
+@media(prefers-color-scheme:dark){.hero-title{color:#f0ede8;}}
+.hero-sub{font-size:12px;color:#888;}
+.hero-right{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.hero-ring{transform:rotate(-90deg);}
+.hero-pct{font-size:11px;text-align:center;}
+
+.week-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-bottom:1.25rem;}
+@media(max-width:700px){.week-grid{grid-template-columns:repeat(4,1fr);}}
+@media(max-width:480px){.week-grid{grid-template-columns:repeat(2,1fr);}}
+
+.day-card{background:#fff;border:0.5px solid rgba(0,0,0,0.12);border-radius:12px;padding:8px 6px;display:flex;flex-direction:column;gap:3px;position:relative;}
+@media(prefers-color-scheme:dark){.day-card{background:#2a2a2a;border-color:rgba(255,255,255,0.1);}}
+.day-card.today{border:1.5px solid #7F77DD;}
+.day-card.complete{border-color:#1D9E75;background:#E1F5EE;}
+@media(prefers-color-scheme:dark){.day-card.complete{background:#0a2e1f;}}
+
+.day-header{font-size:10px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:0.05em;text-align:center;}
+.day-date{font-size:16px;font-weight:500;color:#1a1a1a;text-align:center;}
+@media(prefers-color-scheme:dark){.day-date{color:#f0ede8;}}
+.ring-wrap{display:flex;justify-content:center;margin:2px 0;}
+.ring{transform:rotate(-90deg);}
+
+.sec-label{font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;padding:2px 0 1px;border-top:0.5px solid;margin-top:2px;}
+.ex-item{display:flex;align-items:flex-start;gap:5px;cursor:pointer;padding:2px 3px;border-radius:5px;transition:background 0.12s;-webkit-tap-highlight-color:transparent;}
+.ex-item:hover{background:rgba(0,0,0,0.04);}
+@media(prefers-color-scheme:dark){.ex-item:hover{background:rgba(255,255,255,0.06);}}
+.chk{width:14px;height:14px;min-width:14px;border-radius:50%;border:1.5px solid rgba(0,0,0,0.2);background:#fff;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all 0.18s;flex-shrink:0;}
+@media(prefers-color-scheme:dark){.chk{background:#2a2a2a;border-color:rgba(255,255,255,0.2);}}
+.ex-item.done .chk{background:#1D9E75;border-color:#1D9E75;}
+.ex-item.done .chk::after{content:'';display:block;width:4px;height:6px;border:1.5px solid white;border-top:none;border-left:none;transform:rotate(45deg) translateY(-1px);}
+.ex-item.done .exlabel{color:#aaa;text-decoration:line-through;}
+.exlabel{font-size:10px;color:#1a1a1a;line-height:1.3;}
+@media(prefers-color-scheme:dark){.exlabel{color:#e0ddd8;}}
+.exdetail{font-size:9px;color:#aaa;display:block;}
+.done-badge{position:absolute;top:5px;right:5px;font-size:10px;font-weight:500;color:#1D9E75;opacity:0;transition:opacity 0.3s;}
+.day-card.complete .done-badge{opacity:1;}
+
+.ankle-row{display:flex;align-items:center;gap:5px;padding:2px 3px;}
+.ankle-label{font-size:10px;color:#1a1a1a;flex:1;}
+@media(prefers-color-scheme:dark){.ankle-label{color:#e0ddd8;}}
+.ankle-input{width:38px;font-size:11px;text-align:center;padding:2px 4px;border-radius:4px;border:0.5px solid rgba(0,0,0,0.2);background:#fff;color:#1a1a1a;}
+@media(prefers-color-scheme:dark){.ankle-input{background:#1a1a1a;color:#f0ede8;border-color:rgba(255,255,255,0.2);}}
+
+.notes-input{width:100%;font-size:10px;padding:3px 5px;border-radius:4px;border:0.5px solid rgba(0,0,0,0.12);background:#fff;color:#1a1a1a;resize:none;line-height:1.4;font-family:inherit;margin-top:4px;}
+@media(prefers-color-scheme:dark){.notes-input{background:#1a1a1a;color:#f0ede8;border-color:rgba(255,255,255,0.12);}}
+.notes-input::placeholder{color:#bbb;}
+
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem;}
+@media(max-width:600px){.stats-row{grid-template-columns:repeat(2,1fr);}}
+.stat{background:#fff;border-radius:8px;padding:10px 14px;}
+@media(prefers-color-scheme:dark){.stat{background:#2a2a2a;}}
+.stat-lbl{font-size:11px;color:#888;margin-bottom:3px;}
+.stat-val{font-size:20px;font-weight:500;color:#1a1a1a;}
+@media(prefers-color-scheme:dark){.stat-val{color:#f0ede8;}}
+.stat-sub{font-size:10px;color:#aaa;margin-top:1px;}
+
+.action-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+button{font-size:12px;padding:6px 14px;border-radius:8px;border:0.5px solid rgba(0,0,0,0.2);background:transparent;color:#1a1a1a;cursor:pointer;transition:background 0.15s;}
+button:hover{background:rgba(0,0,0,0.05);}
+@media(prefers-color-scheme:dark){button{color:#f0ede8;border-color:rgba(255,255,255,0.2);}button:hover{background:rgba(255,255,255,0.07);}}
+.toast{font-size:12px;color:#1D9E75;opacity:0;transition:opacity 0.4s;padding:5px 0;}
+
+canvas#cc{position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:9999;}
+</style>
+</head>
+<body>
+<canvas id="cc"></canvas>
+<div class="container">
+  <h1>PT Tracker</h1>
+  <div id="today-hero"></div>
+  <div class="week-grid" id="week-grid"></div>
+  <div class="stats-row" id="stats-row"></div>
+  <div class="action-bar">
+    <button id="save-btn">Save progress</button>
+    <button id="export-btn">Export log</button>
+    <button id="reset-btn">Reset week</button>
+    <span class="toast" id="toast">Saved</span>
+  </div>
+</div>
+
+<script>
+const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const PT=[0,2,4];
+
+const PROGRAM_PT=[
+  {id:'b1',label:'Band steps above knee',detail:'1×20',section:'pt'},
+  {id:'cs',label:'Calf stretch',detail:'3×40 sec',section:'stretch'},
+  {id:'st1',label:'Step touches',detail:'2×20 — hip motion focus',section:'pt'},
+  {id:'bf',label:'Band steps around feet',detail:'2×20',section:'pt'},
+  {id:'dp',label:'Dumbbell pass',detail:'2×15 — COIL',section:'pt'},
+  {id:'st2',label:'Step touch',detail:'2×20',section:'pt'},
+  {id:'dh',label:'Double hop',detail:'3×20 sec',section:'pt'},
+  {id:'sl1',label:'SL balance eyes closed',detail:'3×30 sec',section:'pt'},
+  {id:'sh',label:'Ski hop',detail:'3×20 sec',section:'pt'},
+  {id:'sl2',label:'SL balance eyes closed (2)',detail:'3×30 sec',section:'pt'},
+  {id:'tt',label:'Tip toe walk',detail:'2×2 laps — 10# small steps',section:'pt'},
+  {id:'ws',label:'Wedge step ups to single calf',detail:'3×25',section:'pt'},
+  {id:'wf',label:'Walk 2 miles',detail:'Flat',section:'walk'},
+  {id:'nf',label:'Nerve floss',detail:'1×1',section:'nerve'},
+];
+
+const PROGRAM_WALK=[
+  {id:'wi',label:'Walk 2 miles',detail:'+10 min @ 6% grade',section:'walk'},
+  {id:'nf',label:'Nerve floss',detail:'1×1',section:'nerve'},
+];
+
+const SEC={
+  pt:{label:'PT exercises',color:'#7F77DD',border:'#AFA9EC'},
+  stretch:{label:'Stretch',color:'#1D9E75',border:'#5DCAA5'},
+  walk:{label:'Walk',color:'#378ADD',border:'#85B7EB'},
+  nerve:{label:'Nerve floss',color:'#BA7517',border:'#EF9F27'},
+};
+
+const today=new Date();
+const todayIdx=(today.getDay()+6)%7;
+const baseDate=new Date(today);
+baseDate.setDate(today.getDate()-todayIdx);
+
+function getDate(i){const d=new Date(baseDate);d.setDate(baseDate.getDate()+i);return d;}
+
+const STORAGE_KEY='pt_tracker_standalone_v1';
+
+function defaultState(){return{done:{},ankle:{},notes:{},weekStart:baseDate.toISOString()};}
+
+function loadState(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw)return defaultState();
+    const s=JSON.parse(raw);
+    if(Math.round((baseDate-new Date(s.weekStart))/(864e5))>=7)return defaultState();
+    return s;
+  }catch(e){return defaultState();}
+}
+
+function saveState(){
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch(e){}
+  const t=document.getElementById('toast');
+  if(t){t.style.opacity=1;setTimeout(()=>t.style.opacity=0,1800);}
+}
+
+let state=loadState();
+
+function programForDay(i){return PT.includes(i)?PROGRAM_PT:PROGRAM_WALK;}
+function doneCount(i){return programForDay(i).filter(e=>state.done[`${i}-${e.id}`]).length;}
+function totalCount(i){return programForDay(i).length;}
+function isDayComplete(i){const p=programForDay(i);return p.length>0&&p.every(e=>state.done[`${i}-${e.id}`]);}
+
+function buildRing(pct,complete,size){
+  const s=size||32,r=(s/2)-3,cx=s/2,cy=s/2,circ=2*Math.PI*r;
+  const dash=(circ*pct).toFixed(1);
+  const color=complete?'#1D9E75':'#7F77DD';
+  return `<svg class="ring" width="${s}" height="${s}" viewBox="0 0 ${s} ${s}">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="2.5"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="${dash} ${circ.toFixed(1)}"/>
+  </svg>`;
+}
+
+function renderHero(){
+  const i=todayIdx;
+  const dc=doneCount(i);
+  const tc=totalCount(i);
+  const pct=tc>0?dc/tc:0;
+  const complete=isDayComplete(i);
+  const isPT=PT.includes(i);
+  const d=getDate(i);
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('today-hero').innerHTML=`<div class="today-hero">
+    <div>
+      <div class="hero-day">${DAYS[i]}, ${months[d.getMonth()]} ${d.getDate()} &middot; ${isPT?'PT + walk day':'Walk day'}</div>
+      <div class="hero-title">Done today</div>
+      <div class="hero-sub">${dc} of ${tc} exercises${complete?' &mdash; complete!':''}</div>
+    </div>
+    <div class="hero-right">
+      ${buildRing(pct,complete,52)}
+      <div class="hero-pct" style="color:${complete?'#1D9E75':'#888'};">${Math.round(pct*100)}%</div>
+    </div>
+  </div>`;
+}
+
+function renderDay(i){
+  const d=getDate(i);
+  const prog=programForDay(i);
+  const dc=doneCount(i);
+  const tc=totalCount(i);
+  const pct=tc>0?dc/tc:0;
+  const complete=isDayComplete(i);
+  const isToday=i===todayIdx;
+
+  const card=document.createElement('div');
+  card.className='day-card'+(isToday?' today':'')+(complete?' complete':'');
+
+  let html=`<div class="day-header">${DAYS[i]}</div>
+    <div class="day-date">${d.getDate()}</div>
+    <div class="ring-wrap">${buildRing(pct,complete,32)}</div>
+    <div class="done-badge">done</div>`;
+
+  let lastSec='';
+  prog.forEach(ex=>{
+    if(ex.section!==lastSec){
+      const sc=SEC[ex.section];
+      html+=`<div class="sec-label" style="color:${sc.color};border-top-color:${sc.border}44;">${sc.label}</div>`;
+      lastSec=ex.section;
+    }
+    const key=`${i}-${ex.id}`;
+    const isDone=!!state.done[key];
+    html+=`<div class="ex-item${isDone?' done':''}" data-key="${key}" data-day="${i}" data-id="${ex.id}">
+      <div class="chk"></div>
+      <div class="exlabel">${ex.label}<span class="exdetail">${ex.detail}</span></div>
+    </div>`;
+  });
+
+  html+=`<div class="sec-label" style="color:#1D9E75;border-top-color:#5DCAA544;">Stretches</div>
+    <div class="ankle-row">
+      <span class="ankle-label">Ankle stretches</span>
+      <input class="ankle-input" type="number" min="0" max="99" placeholder="#" value="${state.ankle[i]||''}" id="ankle-${i}"/>
+    </div>
+    <textarea class="notes-input" rows="2" placeholder="Notes..." id="notes-${i}">${state.notes[i]||''}</textarea>`;
+
+  card.innerHTML=html;
+
+  card.querySelectorAll('.ex-item').forEach(item=>{
+    item.addEventListener('click',()=>{
+      const key=item.dataset.key;
+      const di=parseInt(item.dataset.day);
+      const wasComplete=isDayComplete(di);
+      state.done[key]=!state.done[key];
+      if(!wasComplete&&isDayComplete(di))launchConfetti();
+      saveState();
+      render();
+    });
+  });
+
+  card.querySelector(`#ankle-${i}`).addEventListener('input',function(e){
+    e.stopPropagation();state.ankle[i]=this.value;saveState();
+  });
+  card.querySelector(`#notes-${i}`).addEventListener('input',function(e){
+    e.stopPropagation();state.notes[i]=this.value;saveState();
+  });
+
+  return card;
+}
+
+function render(){
+  renderHero();
+  const grid=document.getElementById('week-grid');
+  grid.innerHTML='';
+  let totalDone=0,totalPoss=0,daysComplete=0,streak=0;
+  for(let i=0;i<7;i++){
+    grid.appendChild(renderDay(i));
+    totalDone+=doneCount(i);
+    totalPoss+=totalCount(i);
+    if(isDayComplete(i))daysComplete++;
+  }
+  for(let i=todayIdx;i>=0;i--){if(isDayComplete(i))streak++;else break;}
+  const pct=totalPoss>0?Math.round(totalDone/totalPoss*100):0;
+  document.getElementById('stats-row').innerHTML=`
+    <div class="stat"><div class="stat-lbl">Done this week</div><div class="stat-val">${totalDone}<span style="font-size:13px;color:#aaa">/${totalPoss}</span></div><div class="stat-sub">exercises</div></div>
+    <div class="stat"><div class="stat-lbl">Completion</div><div class="stat-val">${pct}%</div><div class="stat-sub">of week</div></div>
+    <div class="stat"><div class="stat-lbl">Days complete</div><div class="stat-val">${daysComplete}<span style="font-size:13px;color:#aaa">/7</span></div><div class="stat-sub">full days</div></div>
+    <div class="stat"><div class="stat-lbl">Streak</div><div class="stat-val">${streak}<span style="font-size:13px;color:#aaa"> day${streak!==1?'s':''}</span></div><div class="stat-sub">in a row</div></div>`;
+}
+
+function launchConfetti(){
+  const canvas=document.getElementById('cc');
+  const W=canvas.width=window.innerWidth,H=canvas.height=window.innerHeight;
+  const ctx=canvas.getContext('2d');
+  const cols=['#7F77DD','#1D9E75','#EF9F27','#D4537E','#378ADD','#D85A30'];
+  const pieces=Array.from({length:130},()=>({
+    x:Math.random()*W,y:-10-Math.random()*40,
+    vx:(Math.random()-0.5)*4,vy:3+Math.random()*4,
+    r:4+Math.random()*5,color:cols[Math.floor(Math.random()*cols.length)],
+    rot:Math.random()*Math.PI*2,rv:(Math.random()-0.5)*0.2,
+    shape:Math.random()>0.5?'rect':'circle'
+  }));
+  let frame=0;
+  (function draw(){
+    ctx.clearRect(0,0,W,H);
+    pieces.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;p.vy+=0.12;p.rot+=p.rv;
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.fillStyle=p.color;
+      if(p.shape==='rect')ctx.fillRect(-p.r,-p.r/2,p.r*2,p.r);
+      else{ctx.beginPath();ctx.arc(0,0,p.r/2,0,Math.PI*2);ctx.fill();}
+      ctx.restore();
+    });
+    if(++frame<90)requestAnimationFrame(draw);
+    else ctx.clearRect(0,0,W,H);
+  })();
+}
+
+document.getElementById('save-btn').addEventListener('click',saveState);
+document.getElementById('reset-btn').addEventListener('click',()=>{state=defaultState();saveState();render();});
+document.getElementById('export-btn').addEventListener('click',()=>{
+  const lines=[`PT Tracker — Week of ${baseDate.toLocaleDateString()}`,''];
+  for(let i=0;i<7;i++){
+    const d=getDate(i);
+    lines.push(`${DAYS[i]} ${d.getMonth()+1}/${d.getDate()}`);
+    programForDay(i).forEach(ex=>{
+      lines.push(`  ${state.done[`${i}-${ex.id}`]?'[x]':'[ ]'} ${ex.label} — ${ex.detail}`);
+    });
+    if(state.ankle[i])lines.push(`  Ankle stretches: ${state.ankle[i]}`);
+    if(state.notes[i])lines.push(`  Notes: ${state.notes[i]}`);
+    lines.push('');
+  }
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/plain'}));
+  a.download=`pt-log-${baseDate.toISOString().slice(0,10)}.txt`;
+  a.click();
+});
+
+render();
+</script>
+</body>
+</html>
